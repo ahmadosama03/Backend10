@@ -1,0 +1,24 @@
+2025-05-18 22:37:52.255 +03:00 [INF] Starting SDMS API
+2025-05-18 22:37:54.619 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-18 22:37:54.625 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-18 22:37:54.626 +03:00 [INF] Hosting environment: Development
+2025-05-18 22:37:54.630 +03:00 [INF] Content root path: C:\Users\ASUS\SDMS02
+2025-05-18 23:16:14.103 +03:00 [INF] Application is shutting down...
+2025-05-18 23:16:20.620 +03:00 [INF] Starting SDMS API
+2025-05-18 23:16:20.970 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-18 23:16:20.976 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-18 23:16:20.978 +03:00 [INF] Hosting environment: Development
+2025-05-18 23:16:20.979 +03:00 [INF] Content root path: C:\Users\ASUS\SDMS02
+2025-05-18 23:41:07.349 +03:00 [INF] Application is shutting down...
+2025-05-18 23:41:14.004 +03:00 [INF] Starting SDMS API
+2025-05-18 23:41:14.397 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-18 23:41:14.403 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-18 23:41:14.405 +03:00 [INF] Hosting environment: Development
+2025-05-18 23:41:14.406 +03:00 [INF] Content root path: C:\Users\ASUS\SDMS02
+2025-05-18 23:42:34.565 +03:00 [INF] Application is shutting down...
+2025-05-18 23:47:13.571 +03:00 [INF] Starting SDMS API
+2025-05-18 23:47:14.025 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-18 23:47:14.036 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-18 23:47:14.040 +03:00 [INF] Hosting environment: Development
+2025-05-18 23:47:14.043 +03:00 [INF] Content root path: C:\Users\ASUS\SDMS02
+2025-05-18 23:49:07.910 +03:00 [INF] Application is shutting down...
