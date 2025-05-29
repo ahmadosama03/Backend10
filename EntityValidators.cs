@@ -13,7 +13,6 @@ namespace SDMS.Core.Validation
                 .Length(2, 100).WithMessage("Startup name must be between 2 and 100 characters");
 
             RuleFor(x => x.Industry)
-                .NotEmpty().WithMessage("Industry is required")
                 .MaximumLength(50).WithMessage("Industry must not exceed 50 characters");
 
             RuleFor(x => x.Description)
@@ -24,6 +23,7 @@ namespace SDMS.Core.Validation
         }
     }
 
+    // Updated Validator for the refactored DTO
     public class FinancialMetricCreateDtoValidator : AbstractValidator<FinancialMetricCreateDto>
     {
         public FinancialMetricCreateDtoValidator()
@@ -31,24 +31,26 @@ namespace SDMS.Core.Validation
             RuleFor(x => x.StartupId)
                 .GreaterThan(0).WithMessage("Startup ID must be greater than 0");
 
+            RuleFor(x => x.MetricType)
+                .NotEmpty().WithMessage("Metric Type is required")
+                .MaximumLength(50).WithMessage("Metric Type must not exceed 50 characters");
+
+            RuleFor(x => x.Value)
+                .NotNull().WithMessage("Value is required"); // Basic check, could add range checks depending on MetricType
+
             RuleFor(x => x.Date)
-                .NotEmpty().WithMessage("Date is required")
+                .NotNull().WithMessage("Date is required") // Changed from NotEmpty for nullable DateTime
                 .LessThanOrEqualTo(DateTime.UtcNow).WithMessage("Date cannot be in the future");
 
-            RuleFor(x => x.Revenue)
-                .GreaterThanOrEqualTo(0).WithMessage("Revenue must be greater than or equal to 0");
-
-            RuleFor(x => x.Expenses)
-                .GreaterThanOrEqualTo(0).WithMessage("Expenses must be greater than or equal to 0");
-
-            RuleFor(x => x.MonthlySales)
-                .GreaterThanOrEqualTo(0).WithMessage("Monthly sales must be greater than or equal to 0");
+            RuleFor(x => x.Period)
+                .MaximumLength(20).WithMessage("Period must not exceed 20 characters");
 
             RuleFor(x => x.Notes)
                 .MaximumLength(500).WithMessage("Notes must not exceed 500 characters");
         }
     }
 
+    // Updated Validator for the refactored DTO
     public class SubscriptionCreateDtoValidator : AbstractValidator<SubscriptionCreateDto>
     {
         public SubscriptionCreateDtoValidator()
@@ -56,19 +58,12 @@ namespace SDMS.Core.Validation
             RuleFor(x => x.StartupId)
                 .GreaterThan(0).WithMessage("Startup ID must be greater than 0");
 
-            RuleFor(x => x.PlanType)
-                .NotEmpty().WithMessage("Plan type is required")
-                .Must(type => type == "Free" || type == "Pro" || type == "Growth" || type == "Enterprise")
-                .WithMessage("Plan type must be Free, Pro, Growth, or Enterprise");
-
-            RuleFor(x => x.DurationMonths)
-                .GreaterThan(0).WithMessage("Duration must be greater than 0 months");
-
-            RuleFor(x => x.Cost)
-                .GreaterThanOrEqualTo(0).WithMessage("Cost must be greater than or equal to 0");
+            RuleFor(x => x.PlanId)
+                .GreaterThan(0).WithMessage("Plan ID must be greater than 0");
         }
     }
 
+    // Updated Validator for the refactored DTO
     public class TrainingCreateDtoValidator : AbstractValidator<TrainingCreateDto>
     {
         public TrainingCreateDtoValidator()
@@ -76,26 +71,20 @@ namespace SDMS.Core.Validation
             RuleFor(x => x.EmployeeId)
                 .GreaterThan(0).WithMessage("Employee ID must be greater than 0");
 
-            RuleFor(x => x.TrainingName)
-                .NotEmpty().WithMessage("Training name is required")
-                .MaximumLength(100).WithMessage("Training name must not exceed 100 characters");
+            RuleFor(x => x.CourseName)
+                .NotEmpty().WithMessage("Course name is required")
+                .MaximumLength(100).WithMessage("Course name must not exceed 100 characters");
 
-            RuleFor(x => x.Description)
-                .MaximumLength(500).WithMessage("Description must not exceed 500 characters");
-
-            RuleFor(x => x.TrainingType)
-                .NotEmpty().WithMessage("Training type is required")
-                .MaximumLength(50).WithMessage("Training type must not exceed 50 characters");
-
-            RuleFor(x => x.StartDate)
-                .NotEmpty().WithMessage("Start date is required");
-
-            RuleFor(x => x.EndDate)
-                .GreaterThan(x => x.StartDate).WithMessage("End date must be after start date")
-                .When(x => x.EndDate.HasValue);
+            // Removed validation for properties that no longer exist in the DTO
+            // RuleFor(x => x.TrainingName).NotEmpty()... 
+            // RuleFor(x => x.Description).MaximumLength(500)...
+            // RuleFor(x => x.TrainingType).NotEmpty()...
+            // RuleFor(x => x.StartDate).NotEmpty()...
+            // RuleFor(x => x.EndDate).GreaterThan(x => x.StartDate)...
         }
     }
 
+    // Updated Validator for the refactored DTO
     public class NotificationCreateDtoValidator : AbstractValidator<NotificationCreateDto>
     {
         public NotificationCreateDtoValidator()
@@ -103,30 +92,33 @@ namespace SDMS.Core.Validation
             RuleFor(x => x.UserId)
                 .GreaterThan(0).WithMessage("User ID must be greater than 0");
 
-            RuleFor(x => x.Title)
-                .NotEmpty().WithMessage("Title is required")
-                .MaximumLength(100).WithMessage("Title must not exceed 100 characters");
-
             RuleFor(x => x.Message)
                 .NotEmpty().WithMessage("Message is required")
                 .MaximumLength(500).WithMessage("Message must not exceed 500 characters");
 
-            RuleFor(x => x.NotificationType)
-                .NotEmpty().WithMessage("Notification type is required")
-                .Must(type => type == "Email" || type == "SMS" || type == "InApp")
-                .WithMessage("Notification type must be Email, SMS, or InApp");
+            RuleFor(x => x.Type)
+                .MaximumLength(50).WithMessage("Type must not exceed 50 characters");
+
+            // Removed validation for properties that no longer exist in the DTO
+            // RuleFor(x => x.Title).NotEmpty()...
+            // RuleFor(x => x.NotificationType).NotEmpty()...
         }
     }
 
+    // Updated Validator for the refactored DTO
     public class ReportGenerateDtoValidator : AbstractValidator<ReportGenerateDto>
     {
         public ReportGenerateDtoValidator()
         {
             RuleFor(x => x.StartupId)
-                .GreaterThan(0).WithMessage("Startup ID must be greater than 0");
+                .GreaterThan(0).When(x => x.StartupId.HasValue).WithMessage("Startup ID must be greater than 0 if provided");
 
-            RuleFor(x => x.GeneratedById)
-                .GreaterThan(0).WithMessage("Generated by ID must be greater than 0");
+            // Removed GeneratedById validation as it's not in the DTO
+            // RuleFor(x => x.GeneratedById).GreaterThan(0)...
+
+            RuleFor(x => x.ReportType)
+                .NotEmpty().WithMessage("Report Type is required")
+                .MaximumLength(50).WithMessage("Report Type must not exceed 50 characters");
 
             RuleFor(x => x.Format)
                 .NotEmpty().WithMessage("Format is required")
@@ -140,3 +132,4 @@ namespace SDMS.Core.Validation
         }
     }
 }
+

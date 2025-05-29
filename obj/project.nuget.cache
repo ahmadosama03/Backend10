@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "rCESADINoSY=",
+  "dgSpecHash": "qwDAAqQt9vo=",
   "success": true,
-  "projectFilePath": "C:\\Users\\ASUS\\SDMS02\\SDMS02.csproj",
+  "projectFilePath": "C:\\Users\\ASUS\\Downloads\\final_integrated_sdms_no_node_modules\\home\\ubuntu\\sdms_debug\\home\\ubuntu\\integrated_sdms\\backend\\SDMS02.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ASUS\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\ASUS\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",

@@ -93,5 +93,23 @@ namespace SDMS.API.Controllers
 
             return Ok(dashboard);
         }
-    }
-}
+
+        // Moved TransferOwnership method inside the class
+        [HttpPost("{id}/transfer-ownership")]
+        [Authorize(Roles = "Admin")] // Or potentially StartupFounder if they can initiate transfer
+        public async Task<IActionResult> TransferOwnership(int id, StartupTransferOwnershipDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Optional: Add validation to ensure the current user has permission to transfer this startup
+
+            var result = await _startupService.TransferOwnershipAsync(id, dto.NewFounderUserId);
+            if (!result)
+                return BadRequest(new { message = "Ownership transfer failed. Check startup ID and new founder ID." });
+
+            return NoContent();
+        }
+    } // End of StartupsController class
+} // End of namespace
+

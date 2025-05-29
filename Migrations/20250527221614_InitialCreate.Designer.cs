@@ -12,7 +12,7 @@ using SDMS.Infrastructure.Data;
 namespace SDMS02.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250518204551_InitialCreate")]
+    [Migration("20250527221614_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -97,16 +97,26 @@ namespace SDMS02.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("CommissionRate")
+                        .HasColumnType("decimal(5,4)");
+
                     b.Property<string>("EmployeeRole")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("HireDate")
+                    b.Property<DateTime?>("HireDate")
                         .HasColumnType("datetime2");
 
                     b.Property<float>("PerformanceScore")
                         .HasColumnType("real");
+
+                    b.Property<string>("Position")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal?>("Salary")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("StartupId")
                         .HasColumnType("int");
@@ -132,25 +142,28 @@ namespace SDMS02.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
-                    b.Property<float>("Expenses")
-                        .HasColumnType("real");
-
                     b.Property<bool>("IsArchived")
                         .HasColumnType("bit");
 
-                    b.Property<float>("MonthlySales")
-                        .HasColumnType("real");
+                    b.Property<string>("MetricType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Notes")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<float>("Revenue")
-                        .HasColumnType("real");
+                    b.Property<string>("Period")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("StartupId")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -211,15 +224,10 @@ namespace SDMS02.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Description")
+                    b.Property<string>("FilePath")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Format")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<int>("GeneratedById")
                         .HasColumnType("int");
@@ -227,8 +235,8 @@ namespace SDMS02.Migrations
                     b.Property<DateTime>("GeneratedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("bit");
+                    b.Property<string>("Parameters")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ReportType")
                         .IsRequired()
@@ -237,16 +245,6 @@ namespace SDMS02.Migrations
 
                     b.Property<int?>("StartupId")
                         .HasColumnType("int");
-
-                    b.Property<string>("StoragePath")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -265,31 +263,48 @@ namespace SDMS02.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("FoundedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("FounderId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("FoundingDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Industry")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("LogoUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Stage")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("StartupFounderId")
+                        .HasColumnType("int");
 
                     b.Property<string>("SubscriptionStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.HasKey("Id");
 
@@ -297,6 +312,8 @@ namespace SDMS02.Migrations
 
                     b.HasIndex("Name")
                         .IsUnique();
+
+                    b.HasIndex("StartupFounderId");
 
                     b.ToTable("Startups");
                 });
@@ -324,31 +341,17 @@ namespace SDMS02.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("AutoRenew")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("Cost")
-                        .HasColumnType("decimal(10, 2)");
-
-                    b.Property<string>("CostBreakdown")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<string>("PaymentStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("PlanId")
+                        .HasColumnType("int");
 
-                    b.Property<string>("PlanType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<decimal>("PricePaid")
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
@@ -358,10 +361,144 @@ namespace SDMS02.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PlanId");
+
                     b.HasIndex("StartupId")
                         .IsUnique();
 
                     b.ToTable("Subscriptions");
+                });
+
+            modelBuilder.Entity("SDMS.Domain.Entities.SubscriptionPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Features")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("MemberLimit")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PriceDescription")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("PricePerMember")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("SubscriptionPlans");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Features = "[\"Single startup\",\"Up to 1 team member\",\"Basic dashboard\",\"Starter templates\",\"Email support\"]",
+                            MemberLimit = 1,
+                            Name = "Free",
+                            PriceDescription = "0",
+                            PricePerMember = 0m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Features = "[\"Pay only for management members\",\"Multiple startups\",\"Advanced dashboard\",\"All templates\",\"Priority email support\",\"API access\",\"Detailed reports\",\"Team permissions\"]",
+                            MemberLimit = 25,
+                            Name = "Pro",
+                            PriceDescription = "2",
+                            PricePerMember = 2m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Features = "[\"Pay only for management members\",\"Unlimited startups\",\"Premium dashboard\",\"All templates\",\"Priority support 24/7\",\"Advanced analytics\",\"Custom reports\",\"Full API access\",\"Advanced permissions\",\"All integrations\"]",
+                            MemberLimit = 100,
+                            Name = "Growth",
+                            PriceDescription = "5",
+                            PricePerMember = 5m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Features = "[\"Unlimited management members\",\"Enterprise dashboard\",\"Custom templates\",\"Dedicated account manager\",\"White-glove service\",\"Custom integrations\",\"On-premise option\",\"SSO authentication\",\"Advanced security\",\"Custom training\"]",
+                            Name = "Enterprise",
+                            PriceDescription = "Custom",
+                            PricePerMember = 0m
+                        });
+                });
+
+            modelBuilder.Entity("SDMS.Domain.Entities.Template", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TemplateIdentifier")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemplateIdentifier")
+                        .IsUnique();
+
+                    b.ToTable("Templates");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Description = "For startups selling physical products, with inventory management and supply chain features.",
+                            Name = "Physical Product",
+                            TemplateIdentifier = "physical"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "For software, digital goods, or online services with subscription management.",
+                            Name = "Digital Product",
+                            TemplateIdentifier = "digital"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "For consulting firms, agencies, and service providers with client management.",
+                            Name = "Service-Based",
+                            TemplateIdentifier = "service"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "For businesses with both physical and digital components, maximum flexibility.",
+                            Name = "Hybrid",
+                            TemplateIdentifier = "hybrid"
+                        });
                 });
 
             modelBuilder.Entity("SDMS.Domain.Entities.Training", b =>
@@ -435,22 +572,26 @@ namespace SDMS02.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<string>("PasswordHash")
+                    b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("PasswordSalt")
+                    b.Property<byte[]>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<byte[]>("PasswordSalt")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("ResetToken")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<DateTime?>("ResetTokenExpires")
                         .HasColumnType("datetime2");
@@ -459,6 +600,9 @@ namespace SDMS02.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Username")
                         .IsRequired()
@@ -558,11 +702,15 @@ namespace SDMS02.Migrations
 
             modelBuilder.Entity("SDMS.Domain.Entities.Startup", b =>
                 {
-                    b.HasOne("SDMS.Domain.Entities.StartupFounder", "Founder")
-                        .WithMany("Startups")
+                    b.HasOne("SDMS.Domain.Entities.User", "Founder")
+                        .WithMany()
                         .HasForeignKey("FounderId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("SDMS.Domain.Entities.StartupFounder", null)
+                        .WithMany("Startups")
+                        .HasForeignKey("StartupFounderId");
 
                     b.Navigation("Founder");
                 });
@@ -580,11 +728,19 @@ namespace SDMS02.Migrations
 
             modelBuilder.Entity("SDMS.Domain.Entities.Subscription", b =>
                 {
+                    b.HasOne("SDMS.Domain.Entities.SubscriptionPlan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("SDMS.Domain.Entities.Startup", "Startup")
                         .WithOne("Subscription")
                         .HasForeignKey("SDMS.Domain.Entities.Subscription", "StartupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Plan");
 
                     b.Navigation("Startup");
                 });
@@ -608,8 +764,7 @@ namespace SDMS02.Migrations
 
                     b.Navigation("Reports");
 
-                    b.Navigation("Subscription")
-                        .IsRequired();
+                    b.Navigation("Subscription");
                 });
 
             modelBuilder.Entity("SDMS.Domain.Entities.StartupFounder", b =>
@@ -619,20 +774,17 @@ namespace SDMS02.Migrations
 
             modelBuilder.Entity("SDMS.Domain.Entities.User", b =>
                 {
-                    b.Navigation("Admin")
-                        .IsRequired();
+                    b.Navigation("Admin");
 
                     b.Navigation("AuditLogs");
 
-                    b.Navigation("Employee")
-                        .IsRequired();
+                    b.Navigation("Employee");
 
                     b.Navigation("GeneratedReports");
 
                     b.Navigation("Notifications");
 
-                    b.Navigation("StartupFounder")
-                        .IsRequired();
+                    b.Navigation("StartupFounder");
                 });
 #pragma warning restore 612, 618
         }

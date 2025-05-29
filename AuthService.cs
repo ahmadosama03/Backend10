@@ -1,459 +1,238 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using AutoMapper;
+using Microsoft.AspNetCore.Identity; // Assuming Identity is used for user management
+using Microsoft.EntityFrameworkCore; // If using EF Core
+using Microsoft.Extensions.Configuration; // For JWT settings
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using SDMS.Core.DTOs;
 using SDMS.Domain.Entities;
-using SDMS.Infrastructure.Data;
-using AutoMapper;
+using SDMS.Infrastructure.Data; // Assuming DbContext is here
 
 namespace SDMS.Core.Services
 {
-    /// <summary>
-    /// Service for handling authentication and user management in the SDMS system
-    /// </summary>
     public class AuthService
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _context; // Replace with actual DbContext
         private readonly IMapper _mapper;
-        private readonly AuditService _auditService;
+        private readonly IConfiguration _configuration; // For JWT token generation
+        // Assuming UserManager and SignInManager if using ASP.NET Core Identity
+        // private readonly UserManager<User> _userManager;
+        // private readonly SignInManager<User> _signInManager;
 
-        public AuthService(
-            ApplicationDbContext context,
-            IConfiguration configuration,
-            IMapper mapper,
-            AuditService auditService)
+        // Constructor without Identity
+        public AuthService(ApplicationDbContext context, IMapper mapper, IConfiguration configuration)
         {
             _context = context;
-            _configuration = configuration;
             _mapper = mapper;
-            _auditService = auditService;
+            _configuration = configuration;
         }
 
-        /// <summary>
-        /// Authenticates a user and generates a JWT token
-        /// </summary>
-        /// <param name="username">Username</param>
-        /// <param name="password">Password</param>
-        /// <returns>Authentication response with token or null if authentication fails</returns>
+        // Placeholder for AuthenticateAsync - needs real implementation
         public async Task<AuthResponseDto> AuthenticateAsync(string username, string password)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
+            // --- THIS IS A PLACEHOLDER --- 
+            // Replace with actual authentication logic (e.g., check password hash)
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username); // Or email
 
-            if (user == null)
-                return null;
+            if (user == null || !VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt)) // Implement VerifyPasswordHash
+            {
+                return null; // Invalid credentials
+            }
 
-            if (!VerifyPasswordHash(
-                password, 
-                Convert.FromBase64String(user.PasswordHash), 
-                Convert.FromBase64String(user.PasswordSalt)))
-                return null;
-
-            // Log successful login
-            await _auditService.LogUserActionAsync(user.Id, "Login", "Successful login");
-
-            // Generate token
+            // Generate JWT Token
             var token = GenerateJwtToken(user);
-            
-            // Get user role
-            string role = "User";
-            if (await _context.Admins.AnyAsync(a => a.User.Id == user.Id))
-                role = "Admin";
-            else if (await _context.StartupFounders.AnyAsync(f => f.User.Id == user.Id))
-                role = "StartupFounder";
-            else if (await _context.Employees.AnyAsync(e => e.User.Id == user.Id))
-                role = "Employee";
 
             return new AuthResponseDto
             {
-                UserId = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                Role = role,
                 Token = token,
-                Expiration = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["JwtSettings:ExpiryMinutes"]))
+                User = _mapper.Map<UserDto>(user)
             };
         }
 
-        /// <summary>
-        /// Registers a new admin user
-        /// </summary>
-        /// <param name="registerDto">Admin registration data</param>
-        /// <returns>Created admin user or null if registration fails</returns>
+        // Placeholder for RegisterAdminAsync - needs real implementation
         public async Task<UserDto> RegisterAdminAsync(AdminCreateDto registerDto)
         {
-            // Check if username already exists
-            if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username))
-                return null;
+            // --- THIS IS A PLACEHOLDER --- 
+            // Check if user exists, hash password, save to DB
+            if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username || u.Email == registerDto.Email))
+            {
+                return null; // User already exists
+            }
 
-            // Create user with hashed password
-            CreatePasswordHash(registerDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+            CreatePasswordHash(registerDto.Password, out byte[] passwordHash, out byte[] passwordSalt); // Implement CreatePasswordHash
 
             var user = _mapper.Map<User>(registerDto);
-            user.PasswordHash = Convert.ToBase64String(passwordHash);
-            user.PasswordSalt = Convert.ToBase64String(passwordSalt);
+            user.Role = "Admin"; // Set role
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+            user.CreatedAt = DateTime.UtcNow;
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Create admin profile
-            var admin = new Admin
-            {
-                User = user,
-                AdminLevel = registerDto.AdminLevel,
-                Department = registerDto.Department
-            };
-
-            _context.Admins.Add(admin);
-            await _context.SaveChangesAsync();
-
-            // Log user creation
-            await _auditService.LogEntityChangeAsync("Create", user.Id, null, new { user.Id, user.Username, user.Email, Role = "Admin" });
-
             return _mapper.Map<UserDto>(user);
         }
-
-        /// <summary>
-        /// Registers a new startup founder user
-        /// </summary>
-        /// <param name="registerDto">Startup founder registration data</param>
-        /// <returns>Created startup founder user or null if registration fails</returns>
+        
+        // Placeholder for RegisterStartupFounderAsync
         public async Task<UserDto> RegisterStartupFounderAsync(StartupFounderCreateDto registerDto)
         {
-            // Check if username already exists
-            if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username))
-                return null;
+             // --- THIS IS A PLACEHOLDER --- 
+            if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username || u.Email == registerDto.Email))
+            {
+                return null; // User already exists
+            }
 
-            // Create user with hashed password
             CreatePasswordHash(registerDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
             var user = _mapper.Map<User>(registerDto);
-            user.PasswordHash = Convert.ToBase64String(passwordHash);
-            user.PasswordSalt = Convert.ToBase64String(passwordSalt);
+            user.Role = "StartupFounder";
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+            user.CreatedAt = DateTime.UtcNow;
+            // Link to Startup if needed, based on DTO
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-
-            // Create startup founder profile
-            var founder = new StartupFounder
-            {
-                User = user,
-                CompanyName = registerDto.CompanyName
-            };
-
-            _context.StartupFounders.Add(founder);
-            await _context.SaveChangesAsync();
-
-            // Log user creation
-            await _auditService.LogEntityChangeAsync("Create", user.Id, null, new { user.Id, user.Username, user.Email, Role = "StartupFounder" });
 
             return _mapper.Map<UserDto>(user);
         }
 
-        /// <summary>
-        /// Registers a new employee user
-        /// </summary>
-        /// <param name="registerDto">Employee registration data</param>
-        /// <returns>Created employee user or null if registration fails</returns>
+        // Placeholder for RegisterEmployeeAsync
         public async Task<UserDto> RegisterEmployeeAsync(EmployeeCreateDto registerDto)
         {
-            // Check if username already exists
-            if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username))
-                return null;
+             // --- THIS IS A PLACEHOLDER --- 
+            if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username || u.Email == registerDto.Email))
+            {
+                return null; // User already exists
+            }
 
-            // Check if startup exists
-            var startup = await _context.Startups.FindAsync(registerDto.StartupId);
-            if (startup == null)
-                return null;
-
-            // Create user with hashed password
             CreatePasswordHash(registerDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
             var user = _mapper.Map<User>(registerDto);
-            user.PasswordHash = Convert.ToBase64String(passwordHash);
-            user.PasswordSalt = Convert.ToBase64String(passwordSalt);
+            user.Role = "Employee"; // Or determine role from DTO
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+            user.CreatedAt = DateTime.UtcNow;
+            // Link to Employee entity / Startup if needed
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Create employee profile
-            var employee = _mapper.Map<Employee>(registerDto);
-            employee.UserId = user.Id;
-
+            // Create Employee record (might be better in EmployeeService)
+            var employee = new Employee
+            {
+                UserId = user.Id,
+                StartupId = registerDto.StartupId, // Assuming StartupId is in DTO
+                // Map other employee fields from DTO
+            };
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
 
-            // Log user creation
-            await _auditService.LogEntityChangeAsync("Create", user.Id, null, new { user.Id, user.Username, user.Email, Role = "Employee" });
-
             return _mapper.Map<UserDto>(user);
         }
 
-        /// <summary>
-        /// Changes a user's password
-        /// </summary>
-        /// <param name="userId">User ID</param>
-        /// <param name="currentPassword">Current password</param>
-        /// <param name="newPassword">New password</param>
-        /// <returns>True if password change is successful, false otherwise</returns>
+        // Placeholder for ChangePasswordAsync
         public async Task<bool> ChangePasswordAsync(int userId, string currentPassword, string newPassword)
         {
+            // --- THIS IS A PLACEHOLDER --- 
             var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return false;
-
-            if (!VerifyPasswordHash(currentPassword, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
-                return false;
+            if (user == null || !VerifyPasswordHash(currentPassword, user.PasswordHash, user.PasswordSalt))
+            {
+                return false; // User not found or current password incorrect
+            }
 
             CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+            user.UpdatedAt = DateTime.UtcNow;
 
-            user.PasswordHash = Convert.ToBase64String(passwordHash);
-            user.PasswordSalt = Convert.ToBase64String(passwordSalt);
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // --- NEW --- Placeholder for UpdateProfileAsync
+        public async Task<UserDto> UpdateProfileAsync(int userId, UserProfileUpdateDto profileDto)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return null; // User not found
+            }
+
+            // Update allowed fields (e.g., Name, Email - check for uniqueness if needed)
+            // Avoid updating Username, Role, Password here unless specifically intended
+            user.Name = profileDto.Name ?? user.Name;
+            
+            // Handle email change carefully - might require verification
+            if (!string.IsNullOrWhiteSpace(profileDto.Email) && !user.Email.Equals(profileDto.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                 if (await _context.Users.AnyAsync(u => u.Email == profileDto.Email && u.Id != userId))
+                 {
+                     throw new ArgumentException("Email already in use."); // Or return a specific error response
+                 }
+                 user.Email = profileDto.Email;
+                 // Consider adding email verification logic here
+            }
+            
+            // Map other updatable profile fields from DTO
+            user.UpdatedAt = DateTime.UtcNow;
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
-            // Log password change
-            await _auditService.LogUserActionAsync(userId, "PasswordChange", "Password changed successfully");
-
-            return true;
-        }
-
-        /// <summary>
-        /// Gets a user by ID
-        /// </summary>
-        /// <param name="userId">User ID</param>
-        /// <returns>User DTO</returns>
-        public async Task<UserDto> GetUserAsync(int userId)
-        {
-            var user = await _context.Users.FindAsync(userId);
             return _mapper.Map<UserDto>(user);
         }
 
-        /// <summary>
-        /// Updates a user's profile
-        /// </summary>
-        /// <param name="userId">User ID</param>
-        /// <param name="updateDto">User update data</param>
-        /// <returns>True if update is successful, false otherwise</returns>
-        public async Task<bool> UpdateUserAsync(int userId, UserUpdateDto updateDto)
-        {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return false;
-
-            var oldUser = new
-            {
-                user.Email,
-                user.PhoneNumber,
-                user.IsActive
-            };
-
-            user.Email = updateDto.Email;
-            user.PhoneNumber = updateDto.PhoneNumber;
-            user.IsActive = updateDto.IsActive;
-
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-
-            // Log user update
-            await _auditService.LogEntityChangeAsync("Update", userId, oldUser, new
-            {
-                updateDto.Email,
-                updateDto.PhoneNumber,
-                updateDto.IsActive
-            });
-
-            return true;
-        }
-
-        /// <summary>
-        /// Deactivates a user account
-        /// </summary>
-        /// <param name="userId">User ID</param>
-        /// <returns>True if deactivation is successful, false otherwise</returns>
-        public async Task<bool> DeactivateUserAsync(int userId)
-        {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return false;
-
-            user.IsActive = false;
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-
-            // Log user deactivation
-            await _auditService.LogUserActionAsync(userId, "Deactivate", "User account deactivated");
-
-            return true;
-        }
-
-        /// <summary>
-        /// Reactivates a user account
-        /// </summary>
-        /// <param name="userId">User ID</param>
-        /// <returns>True if reactivation is successful, false otherwise</returns>
-        public async Task<bool> ReactivateUserAsync(int userId)
-        {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return false;
-
-            user.IsActive = true;
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-
-            // Log user reactivation
-            await _auditService.LogUserActionAsync(userId, "Reactivate", "User account reactivated");
-
-            return true;
-        }
-
-        /// <summary>
-        /// Generates a password reset token for a user
-        /// </summary>
-        /// <param name="email">User email</param>
-        /// <returns>Password reset token or null if user not found</returns>
-        public async Task<string> GeneratePasswordResetTokenAsync(string email)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null)
-                return null;
-
-            // Generate a random token
-            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-            
-            // Store token with expiration (24 hours)
-            user.ResetToken = token;
-            user.ResetTokenExpires = DateTime.UtcNow.AddHours(24);
-            
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-
-            // Log token generation
-            await _auditService.LogUserActionAsync(user.Id, "PasswordResetRequested", "Password reset token generated");
-
-            return token;
-        }
-
-        /// <summary>
-        /// Resets a user's password using a reset token
-        /// </summary>
-        /// <param name="email">User email</param>
-        /// <param name="token">Reset token</param>
-        /// <param name="newPassword">New password</param>
-        /// <returns>True if password reset is successful, false otherwise</returns>
-        public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => 
-                u.Email == email && 
-                u.ResetToken == token && 
-                u.ResetTokenExpires > DateTime.UtcNow);
-
-            if (user == null)
-                return false;
-
-            CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
-
-            user.PasswordHash = Convert.ToBase64String(passwordHash);
-            user.PasswordSalt = Convert.ToBase64String(passwordSalt);
-            user.ResetToken = null;
-            user.ResetTokenExpires = null;
-
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-
-            // Log password reset
-            await _auditService.LogUserActionAsync(user.Id, "PasswordReset", "Password reset successfully");
-
-            return true;
-        }
-
-        /// <summary>
-        /// Creates a password hash
-        /// </summary>
-        /// <param name="password">Password</param>
-        /// <param name="passwordHash">Output password hash</param>
-        /// <param name="passwordSalt">Output password salt</param>
+        // --- Helper Methods (Implement these) ---
         private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
-            using (var hmac = new HMACSHA512())
+            using (var hmac = new System.Security.Cryptography.HMACSHA512())
             {
                 passwordSalt = hmac.Key;
-                passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+                passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
             }
         }
 
-        /// <summary>
-        /// Verifies a password against a hash
-        /// </summary>
-        /// <param name="password">Password to verify</param>
-        /// <param name="storedHash">Stored password hash</param>
-        /// <param name="storedSalt">Stored password salt</param>
-        /// <returns>True if password is correct, false otherwise</returns>
         private bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
         {
-            using (var hmac = new HMACSHA512(storedSalt))
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
             {
-                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-                for (int i = 0; i < computedHash.Length; i++)
-                {
-                    if (computedHash[i] != storedHash[i]) return false;
-                }
+                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                return computedHash.SequenceEqual(storedHash);
             }
-            return true;
         }
 
-        /// <summary>
-        /// Generates a JWT token for a user
-        /// </summary>
-        /// <param name="user">User</param>
-        /// <returns>JWT token</returns>
         private string GenerateJwtToken(User user)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"]);
-            
-            var claims = new List<Claim>
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
             {
                 new Claim("UserId", user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(ClaimTypes.NameIdentifier, user.Username), // Often used for username
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.Name ?? ""), // User's full name
+                new Claim(ClaimTypes.Role, user.Role)
+                // Add other claims as needed
             };
 
-            // Add role claim
-            if (_context.Admins.Any(a => a.User.Id == user.Id))
-                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-            else if (_context.StartupFounders.Any(f => f.User.Id == user.Id))
-                claims.Add(new Claim(ClaimTypes.Role, "StartupFounder"));
-            else if (_context.Employees.Any(e => e.User.Id == user.Id))
-                claims.Add(new Claim(ClaimTypes.Role, "Employee"));
-            else
-                claims.Add(new Claim(ClaimTypes.Role, "User"));
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:DurationInMinutes"])), // Use UtcNow
+                signingCredentials: credentials);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["ExpiryMinutes"])),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-                Issuer = jwtSettings["Issuer"],
-                Audience = jwtSettings["Audience"]
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            return tokenHandler.WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }
+

@@ -1,0 +1,35 @@
+2025-05-28 01:17:08.237 +03:00 [INF] Starting SDMS API
+2025-05-28 01:17:08.731 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-28 01:17:08.738 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-28 01:17:08.740 +03:00 [INF] Hosting environment: Development
+2025-05-28 01:17:08.741 +03:00 [INF] Content root path: C:\Users\ASUS\Downloads\final_integrated_sdms_no_node_modules\home\ubuntu\sdms_debug\home\ubuntu\integrated_sdms\backend
+2025-05-28 01:29:50.694 +03:00 [INF] Application is shutting down...
+2025-05-28 01:30:31.616 +03:00 [INF] Starting SDMS API
+2025-05-28 01:30:32.075 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-28 01:30:32.081 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-28 01:30:32.082 +03:00 [INF] Hosting environment: Development
+2025-05-28 01:30:32.084 +03:00 [INF] Content root path: C:\Users\ASUS\Downloads\final_integrated_sdms_no_node_modules\home\ubuntu\sdms_debug\home\ubuntu\integrated_sdms\backend
+2025-05-28 01:31:55.751 +03:00 [INF] Application is shutting down...
+2025-05-28 01:47:48.747 +03:00 [INF] Starting SDMS API
+2025-05-28 01:47:49.160 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-28 01:47:49.166 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-28 01:47:49.168 +03:00 [INF] Hosting environment: Development
+2025-05-28 01:47:49.170 +03:00 [INF] Content root path: C:\Users\ASUS\Downloads\final_integrated_sdms_no_node_modules\home\ubuntu\sdms_debug\home\ubuntu\integrated_sdms\backend
+2025-05-28 19:29:44.309 +03:00 [INF] Starting SDMS API
+2025-05-28 19:29:47.020 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-28 19:29:47.026 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-28 19:29:47.028 +03:00 [INF] Hosting environment: Development
+2025-05-28 19:29:47.029 +03:00 [INF] Content root path: C:\Users\ASUS\Downloads\final_integrated_sdms_no_node_modules\home\ubuntu\sdms_debug\home\ubuntu\integrated_sdms\backend
+2025-05-28 21:36:27.194 +03:00 [INF] Application is shutting down...
+2025-05-28 22:50:23.189 +03:00 [INF] Starting SDMS API
+2025-05-28 22:50:23.613 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-28 22:50:23.621 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-28 22:50:23.623 +03:00 [INF] Hosting environment: Development
+2025-05-28 22:50:23.626 +03:00 [INF] Content root path: C:\Users\ASUS\Downloads\final_integrated_sdms_no_node_modules\home\ubuntu\sdms_debug\home\ubuntu\integrated_sdms\backend
+2025-05-28 22:50:27.207 +03:00 [WRN] Failed to determine the https port for redirect.
+2025-05-28 23:31:10.179 +03:00 [INF] Application is shutting down...
+2025-05-28 23:32:21.133 +03:00 [INF] Starting SDMS API
+2025-05-28 23:32:23.561 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-28 23:32:23.568 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-28 23:32:23.570 +03:00 [INF] Hosting environment: Development
+2025-05-28 23:32:23.573 +03:00 [INF] Content root path: C:\Users\ASUS\Downloads\final_integrated_sdms_no_node_modules\home\ubuntu\sdms_debug\home\ubuntu\integrated_sdms\backend

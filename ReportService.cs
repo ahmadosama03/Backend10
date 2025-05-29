@@ -12,6 +12,8 @@ using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
 using OfficeOpenXml;
+using iText.Kernel.Font; // Added for font factory
+using iText.IO.Font.Constants; // Added for standard fonts
 
 namespace SDMS.Core.Services
 {
@@ -19,61 +21,71 @@ namespace SDMS.Core.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ExportService _exportService;
+        private readonly PdfFont _boldFont;
+        private readonly PdfFont _italicFont;
 
         public ReportService(ApplicationDbContext context, ExportService exportService)
         {
             _context = context;
             _exportService = exportService;
+            // Pre-create fonts for efficiency
+            _boldFont = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD);
+            _italicFont = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_OBLIQUE);
         }
 
         public async Task<IEnumerable<ReportDto>> GetReportsAsync(int startupId)
         {
             var reports = await _context.Reports
-                .Include(r => r.GeneratedBy)
-                .Where(r => r.StartupId == startupId && !r.IsArchived)
+                .Include(r => r.GeneratedBy) // Include the User navigation property
+                .Where(r => r.StartupId == startupId) 
                 .OrderByDescending(r => r.GeneratedDate)
                 .ToListAsync();
 
+            // Use AutoMapper if configured, otherwise manual mapping
             return reports.Select(r => new ReportDto
             {
                 Id = r.Id,
-                Title = r.Title,
-                Description = r.Description,
                 GeneratedDate = r.GeneratedDate,
-                GeneratedBy = r.GeneratedBy.Username,
+                GeneratedByName = r.GeneratedBy?.Name ?? "System", // Use User.Name
                 ReportType = r.ReportType,
-                Format = r.Format,
-                StoragePath = r.StoragePath,
-                StartupId = r.StartupId
+                // Format = r.Format, // Format property removed from Report entity
+                FilePath = r.FilePath, // FilePath is on Report entity
+                StartupId = r.StartupId,
+                GeneratedById = r.GeneratedById,
+                Parameters = r.Parameters
             });
         }
 
         public async Task<ReportDto> GetReportAsync(int id)
         {
             var report = await _context.Reports
-                .Include(r => r.GeneratedBy)
+                .Include(r => r.GeneratedBy) // Include the User navigation property
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             if (report == null)
                 return null;
 
+            // Use AutoMapper if configured, otherwise manual mapping
             return new ReportDto
             {
                 Id = report.Id,
-                Title = report.Title,
-                Description = report.Description,
                 GeneratedDate = report.GeneratedDate,
-                GeneratedBy = report.GeneratedBy.Username,
+                GeneratedByName = report.GeneratedBy?.Name ?? "System", // Use User.Name
                 ReportType = report.ReportType,
-                Format = report.Format,
-                StoragePath = report.StoragePath,
-                StartupId = report.StartupId
+                // Format = report.Format, // Format property removed from Report entity
+                FilePath = report.FilePath, // FilePath is on Report entity
+                StartupId = report.StartupId,
+                GeneratedById = report.GeneratedById,
+                Parameters = report.Parameters
             };
         }
 
         public async Task<ReportDto> GenerateFinancialReportAsync(ReportGenerateDto dto)
         {
-            var startup = await _context.Startups.FindAsync(dto.StartupId);
+            if (!dto.StartupId.HasValue)
+                throw new ArgumentException("Startup ID is required for financial reports.");
+                
+            var startup = await _context.Startups.FindAsync(dto.StartupId.Value);
             if (startup == null)
                 throw new ArgumentException("Startup not found");
 
@@ -81,97 +93,101 @@ namespace SDMS.Core.Services
             if (dto.Format.ToLower() == "pdf")
             {
                 filePath = await _exportService.ExportFinancialReportToPdfAsync(
-                    dto.StartupId, 
+                    dto.StartupId.Value, 
                     dto.StartDate, 
                     dto.EndDate);
             }
             else if (dto.Format.ToLower() == "excel")
             {
                 filePath = await _exportService.ExportFinancialReportToExcelAsync(
-                    dto.StartupId, 
+                    dto.StartupId.Value, 
                     dto.StartDate, 
                     dto.EndDate);
             }
             else
             {
-                throw new ArgumentException("Unsupported format. Use 'PDF' or 'Excel'.");
+                throw new ArgumentException("Unsupported format. Use 'pdf' or 'excel'.");
             }
 
             var report = new Report
             {
-                Title = $"Financial Report - {startup.Name}",
-                Description = $"Financial report for period {dto.StartDate:yyyy-MM-dd} to {dto.EndDate:yyyy-MM-dd}",
                 GeneratedDate = DateTime.UtcNow,
                 GeneratedById = dto.GeneratedById,
                 ReportType = "Financial",
-                Format = dto.Format,
-                StoragePath = filePath,
-                StartupId = dto.StartupId
+                // Format = dto.Format, // Format property removed from Report entity
+                FilePath = filePath,
+                StartupId = dto.StartupId,
+                Parameters = System.Text.Json.JsonSerializer.Serialize(new { dto.StartDate, dto.EndDate }) // Store parameters
             };
 
             _context.Reports.Add(report);
             await _context.SaveChangesAsync();
 
+            var generatedByUser = await _context.Users.FindAsync(report.GeneratedById);
+            // Use AutoMapper or manual mapping
             return new ReportDto
             {
                 Id = report.Id,
-                Title = report.Title,
-                Description = report.Description,
                 GeneratedDate = report.GeneratedDate,
-                GeneratedBy = (await _context.Users.FindAsync(report.GeneratedById))?.Username,
+                GeneratedByName = generatedByUser?.Name ?? "System",
                 ReportType = report.ReportType,
-                Format = report.Format,
-                StoragePath = report.StoragePath,
-                StartupId = report.StartupId
+                // Format = report.Format, // Format property removed from Report entity
+                FilePath = report.FilePath,
+                StartupId = report.StartupId,
+                GeneratedById = report.GeneratedById,
+                Parameters = report.Parameters
             };
         }
 
         public async Task<ReportDto> GenerateEmployeeReportAsync(ReportGenerateDto dto)
         {
-            var startup = await _context.Startups.FindAsync(dto.StartupId);
+             if (!dto.StartupId.HasValue)
+                throw new ArgumentException("Startup ID is required for employee reports.");
+
+            var startup = await _context.Startups.FindAsync(dto.StartupId.Value);
             if (startup == null)
                 throw new ArgumentException("Startup not found");
 
             string filePath;
             if (dto.Format.ToLower() == "pdf")
             {
-                filePath = await _exportService.ExportEmployeeReportToPdfAsync(dto.StartupId);
+                filePath = await _exportService.ExportEmployeeReportToPdfAsync(dto.StartupId.Value);
             }
             else if (dto.Format.ToLower() == "excel")
             {
-                filePath = await _exportService.ExportEmployeeReportToExcelAsync(dto.StartupId);
+                filePath = await _exportService.ExportEmployeeReportToExcelAsync(dto.StartupId.Value);
             }
             else
             {
-                throw new ArgumentException("Unsupported format. Use 'PDF' or 'Excel'.");
+                throw new ArgumentException("Unsupported format. Use 'pdf' or 'excel'.");
             }
 
             var report = new Report
             {
-                Title = $"Employee Report - {startup.Name}",
-                Description = $"Employee status report as of {DateTime.UtcNow:yyyy-MM-dd}",
                 GeneratedDate = DateTime.UtcNow,
                 GeneratedById = dto.GeneratedById,
                 ReportType = "Employee",
-                Format = dto.Format,
-                StoragePath = filePath,
+                // Format = dto.Format, // Format property removed from Report entity
+                FilePath = filePath,
                 StartupId = dto.StartupId
             };
 
             _context.Reports.Add(report);
             await _context.SaveChangesAsync();
 
+            var generatedByUser = await _context.Users.FindAsync(report.GeneratedById);
+            // Use AutoMapper or manual mapping
             return new ReportDto
             {
                 Id = report.Id,
-                Title = report.Title,
-                Description = report.Description,
                 GeneratedDate = report.GeneratedDate,
-                GeneratedBy = (await _context.Users.FindAsync(report.GeneratedById))?.Username,
+                GeneratedByName = generatedByUser?.Name ?? "System",
                 ReportType = report.ReportType,
-                Format = report.Format,
-                StoragePath = report.StoragePath,
-                StartupId = report.StartupId
+                // Format = report.Format, // Format property removed from Report entity
+                FilePath = report.FilePath,
+                StartupId = report.StartupId,
+                GeneratedById = report.GeneratedById,
+                Parameters = report.Parameters
             };
         }
 
@@ -181,7 +197,7 @@ namespace SDMS.Core.Services
             if (report == null)
                 return false;
 
-            report.IsArchived = true;
+            _context.Reports.Remove(report); // Example: Delete instead of archiving if no IsArchived flag
             await _context.SaveChangesAsync();
             return true;
         }
@@ -192,17 +208,20 @@ namespace SDMS.Core.Services
             if (report == null)
                 throw new ArgumentException("Report not found");
 
-            if (!File.Exists(report.StoragePath))
-                throw new FileNotFoundException("Report file not found");
+            if (!File.Exists(report.FilePath))
+                throw new FileNotFoundException("Report file not found", report.FilePath);
 
-            return report.StoragePath;
+            return report.FilePath;
         }
 
+        // This method seems generic and might belong in ExportService or a utility class
+        // It also uses iText7 directly, which might be inconsistent if other methods use different libraries
+        // Corrected SetBold/SetItalic usage
         public void AddGenericReportContent(Document document, string title, string subtitle, Dictionary<string, string> properties)
         {
             // Add title
             document.Add(new Paragraph(title)
-                .SetFont(iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD))
+                .SetFont(_boldFont) // Use pre-defined bold font
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetFontSize(20));
 
@@ -220,7 +239,7 @@ namespace SDMS.Core.Services
                 
                 foreach (var property in properties)
                 {
-                    table.AddCell(new Cell().Add(new Paragraph(property.Key)));//setbold was deleted
+                    table.AddCell(new Cell().Add(new Paragraph(property.Key).SetFont(_boldFont))); // Use pre-defined bold font
                     table.AddCell(new Cell().Add(new Paragraph(property.Value)));
                 }
                 
@@ -231,9 +250,10 @@ namespace SDMS.Core.Services
                 document.Add(new Paragraph("No data available.")
                     .SetTextAlignment(TextAlignment.CENTER)
                     .SetFontSize(12)
-                  //  .SetItalic()
+                    .SetFont(_italicFont) // Use pre-defined italic font
                     );
             }
         }
     }
 }
+

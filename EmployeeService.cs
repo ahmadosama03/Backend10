@@ -28,13 +28,16 @@ namespace SDMS.Core.Services
             return employees.Select(e => new EmployeeDto
             {
                 Id = e.Id,
-                Username = e.User.Username,
-                Email = e.User.Email,
-                PhoneNumber = e.User.PhoneNumber,
+                Username = e.User?.Username ?? "N/A", // Handle potential null User
+                Email = e.User?.Email ?? "N/A",
+                PhoneNumber = e.User?.PhoneNumber,
                 EmployeeRole = e.EmployeeRole,
                 PerformanceScore = e.PerformanceScore,
                 HireDate = e.HireDate,
-                StartupId = e.StartupId
+                StartupId = e.StartupId,
+                Position = e.Position, // Added Position
+                Salary = e.Salary, // Added Salary
+                CommissionRate = e.CommissionRate // Added CommissionRate
             });
         }
 
@@ -50,13 +53,16 @@ namespace SDMS.Core.Services
             return new EmployeeDto
             {
                 Id = employee.Id,
-                Username = employee.User.Username,
-                Email = employee.User.Email,
-                PhoneNumber = employee.User.PhoneNumber,
+                Username = employee.User?.Username ?? "N/A", // Handle potential null User
+                Email = employee.User?.Email ?? "N/A",
+                PhoneNumber = employee.User?.PhoneNumber,
                 EmployeeRole = employee.EmployeeRole,
                 PerformanceScore = employee.PerformanceScore,
                 HireDate = employee.HireDate,
-                StartupId = employee.StartupId
+                StartupId = employee.StartupId,
+                Position = employee.Position, // Added Position
+                Salary = employee.Salary, // Added Salary
+                CommissionRate = employee.CommissionRate // Added CommissionRate
             };
         }
 
@@ -68,6 +74,9 @@ namespace SDMS.Core.Services
 
             employee.EmployeeRole = dto.EmployeeRole;
             employee.PerformanceScore = dto.PerformanceScore;
+            employee.Position = dto.Position; // Update Position
+            employee.Salary = dto.Salary; // Update Salary
+            employee.CommissionRate = dto.CommissionRate; // Update CommissionRate
 
             await _context.SaveChangesAsync();
             return true;
@@ -79,7 +88,7 @@ namespace SDMS.Core.Services
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
-            if (employee == null)
+            if (employee == null || employee.User == null)
                 return false;
 
             employee.User.IsActive = false;
@@ -189,7 +198,7 @@ namespace SDMS.Core.Services
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == employeeId);
 
-            if (employee == null)
+            if (employee == null || employee.User == null)
                 return null;
 
             var trainings = await _context.Trainings
@@ -200,6 +209,13 @@ namespace SDMS.Core.Services
             var ongoingTrainings = trainings.Count(t => t.Status == "InProgress");
             var avgCompletion = trainings.Any() ? trainings.Average(t => t.CompletionPercentage) : 0;
 
+            // Handle nullable HireDate for Tenure calculation
+            int tenureInDays = 0;
+            if (employee.HireDate.HasValue)
+            {
+                tenureInDays = (int)(DateTime.UtcNow - employee.HireDate.Value).TotalDays;
+            }
+
             return new PerformanceSummaryDto
             {
                 EmployeeId = employee.Id,
@@ -207,7 +223,7 @@ namespace SDMS.Core.Services
                 EmployeeRole = employee.EmployeeRole,
                 PerformanceScore = employee.PerformanceScore,
                 HireDate = employee.HireDate,
-                TenureInDays = (int)(DateTime.UtcNow - employee.HireDate).TotalDays,
+                TenureInDays = tenureInDays, // Use calculated value
                 CompletedTrainings = completedTrainings,
                 OngoingTrainings = ongoingTrainings,
                 AvgTrainingCompletion = avgCompletion
@@ -218,7 +234,7 @@ namespace SDMS.Core.Services
         {
             var employees = await _context.Employees
                 .Include(e => e.User)
-                .Where(e => e.StartupId == startupId && e.User.IsActive)
+                .Where(e => e.StartupId == startupId && e.User != null && e.User.IsActive)
                 .ToListAsync();
 
             if (!employees.Any())
@@ -239,7 +255,10 @@ namespace SDMS.Core.Services
                 EmployeeRole = e.EmployeeRole,
                 PerformanceScore = e.PerformanceScore,
                 HireDate = e.HireDate,
-                StartupId = e.StartupId
+                StartupId = e.StartupId,
+                Position = e.Position, // Added Position
+                Salary = e.Salary, // Added Salary
+                CommissionRate = e.CommissionRate // Added CommissionRate
             }).ToList();
 
             var roleDistribution = employees
@@ -260,3 +279,4 @@ namespace SDMS.Core.Services
         }
     }
 }
+

@@ -93,7 +93,12 @@ namespace SDMS.API.Controllers
             if (passwordDto.NewPassword != passwordDto.ConfirmPassword)
                 return BadRequest(new { message = "New password and confirmation password do not match" });
 
-            var userId = int.Parse(User.FindFirst("UserId")?.Value);
+            var userIdClaim = User.FindFirst("UserId");
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user token" });
+            }
+            
             var result = await _authService.ChangePasswordAsync(userId, passwordDto.CurrentPassword, passwordDto.NewPassword);
             if (!result)
                 return BadRequest(new { message = "Password change failed. Please check your current password." });
@@ -107,5 +112,41 @@ namespace SDMS.API.Controllers
         {
             return Ok(new { isValid = true, userId = User.FindFirst("UserId")?.Value, role = User.FindFirst(ClaimTypes.Role)?.Value });
         }
-    }
-}
+
+        // Moved UpdateProfile method inside the class
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> UpdateProfile(UserProfileUpdateDto profileDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userIdClaim = User.FindFirst("UserId");
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user token" });
+            }
+
+            try
+            {
+                var updatedUser = await _authService.UpdateProfileAsync(userId, profileDto);
+                if (updatedUser == null)
+                {
+                    // This might happen if the user was deleted between token validation and now, unlikely but possible.
+                    return NotFound(new { message = "User not found" });
+                }
+                return Ok(updatedUser);
+            }
+            catch (ArgumentException ex) // Catch specific exceptions like email conflict
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception ex
+                return StatusCode(500, new { message = "An error occurred while updating the profile." });
+            }
+        }
+    } // End of AuthController class
+} // End of namespace
+

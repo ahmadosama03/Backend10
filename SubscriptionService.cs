@@ -1,127 +1,71 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using SDMS.Domain.Entities;
-using SDMS.Core.DTOs;
 using System.Linq;
-using System.Text.Json;
-using SDMS.Infrastructure.Data;
+using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using SDMS.Core.DTOs;
+using SDMS.Domain.Entities; // Assuming SubscriptionPlan entity is here if using DB
+using SDMS.Infrastructure.Data; // Assuming DbContext is here
+using System.Text.Json; // For deserializing features
 
 namespace SDMS.Core.Services
 {
     public class SubscriptionService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public SubscriptionService(ApplicationDbContext context)
+        // Mock plans data - Refactored to use SubscriptionPlanDto
+        // Keep this temporarily until DB is fully set up and seeded
+        private static readonly List<SubscriptionPlanDto> _mockPlans = new List<SubscriptionPlanDto>
+        {
+            new SubscriptionPlanDto { Id = 1, Name = "Free", MemberLimit = 1, PricePerMember = 0, PriceDescription = "0", Features = new List<string>{ "Single startup", "Up to 1 team member", "Basic dashboard", "Starter templates", "Email support" }, PlanType = "Free", MonthlyCost = 0 },
+            new SubscriptionPlanDto { Id = 2, Name = "Pro", MemberLimit = 25, PricePerMember = 2, PriceDescription = "2", Features = new List<string>{ "Pay only for management members", "Multiple startups", "Advanced dashboard", "All templates", "Priority email support", "API access", "Detailed reports", "Team permissions" }, PlanType = "Pro", MonthlyCost = 2 },
+            new SubscriptionPlanDto { Id = 3, Name = "Growth", MemberLimit = 100, PricePerMember = 5, PriceDescription = "5", Features = new List<string>{ "Pay only for management members", "Unlimited startups", "Premium dashboard", "All templates", "Priority support 24/7", "Advanced analytics", "Custom reports", "Full API access", "Advanced permissions", "All integrations" }, PlanType = "Growth", MonthlyCost = 5 },
+            new SubscriptionPlanDto { Id = 4, Name = "Enterprise", MemberLimit = null, PricePerMember = 0, PriceDescription = "Custom", Features = new List<string>{ "Unlimited management members", "Enterprise dashboard", "Custom templates", "Dedicated account manager", "White-glove service", "Custom integrations", "On-premise option", "SSO authentication", "Advanced security", "Custom training" }, PlanType = "Enterprise", MonthlyCost = 0 }, // Assuming custom cost means 0 here, adjust as needed
+        };
+
+        public SubscriptionService(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<SubscriptionDto> GetSubscriptionAsync(int startupId)
         {
             var subscription = await _context.Subscriptions
-                .FirstOrDefaultAsync(s => s.StartupId == startupId);
-
-            if (subscription == null)
-                return null;
-
-            return new SubscriptionDto
+                                             .Include(s => s.Plan) // Include Plan details
+                                             .FirstOrDefaultAsync(s => s.StartupId == startupId);
+            // Manual mapping if AutoMapper isn't configured for PlanName
+            var subDto = _mapper.Map<SubscriptionDto>(subscription);
+            if (subDto != null && subscription?.Plan != null)
             {
-                Id = subscription.Id,
-                StartupId = subscription.StartupId,
-                PlanType = subscription.PlanType,
-                StartDate = subscription.StartDate,
-                EndDate = subscription.EndDate,
-                Cost = subscription.Cost,
-                IsActive = subscription.IsActive,
-                AutoRenew = subscription.AutoRenew,
-                PaymentStatus = subscription.PaymentStatus,
-                CostBreakdown = subscription.CostBreakdown != null 
-                    ? JsonSerializer.Deserialize<Dictionary<string, decimal>>(subscription.CostBreakdown)
-                    : new Dictionary<string, decimal>()
-            };
+                subDto.PlanName = subscription.Plan.Name;
+            }
+            return subDto;
         }
 
         public async Task<SubscriptionDto> CreateSubscriptionAsync(SubscriptionCreateDto dto)
         {
-            // Check if startup already has a subscription
-            var existingSubscription = await _context.Subscriptions
-                .FirstOrDefaultAsync(s => s.StartupId == dto.StartupId);
+            var plan = await _context.SubscriptionPlans.FindAsync(dto.PlanId); // Fetch the plan from DB
+            if (plan == null) throw new ArgumentException("Invalid PlanId");
 
-            if (existingSubscription != null)
-            {
-                // Deactivate existing subscription
-                existingSubscription.IsActive = false;
-                await _context.SaveChangesAsync();
-            }
-
-            // Create cost breakdown
-            var costBreakdown = new Dictionary<string, decimal>();
-            
-            switch (dto.PlanType)
-            {
-                case "Free":
-                    costBreakdown.Add("Base", 0);
-                    break;
-                case "Pro":
-                    costBreakdown.Add("Base", 50);
-                    costBreakdown.Add("Support", 20);
-                    costBreakdown.Add("Analytics", 30);
-                    break;
-                case "Growth":
-                    costBreakdown.Add("Base", 100);
-                    costBreakdown.Add("Support", 50);
-                    costBreakdown.Add("Analytics", 50);
-                    costBreakdown.Add("Advanced Features", 50);
-                    break;
-                case "Enterprise":
-                    costBreakdown.Add("Base", 200);
-                    costBreakdown.Add("Premium Support", 100);
-                    costBreakdown.Add("Advanced Analytics", 100);
-                    costBreakdown.Add("Custom Features", 100);
-                    costBreakdown.Add("Dedicated Account Manager", 100);
-                    break;
-            }
-
-            var subscription = new Subscription
-            {
-                StartupId = dto.StartupId,
-                PlanType = dto.PlanType,
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddMonths(dto.DurationMonths),
-                Cost = dto.Cost,
-                IsActive = true,
-                AutoRenew = dto.AutoRenew,
-                PaymentStatus = "Pending",
-                CostBreakdown = JsonSerializer.Serialize(costBreakdown)
-            };
+            var subscription = _mapper.Map<Subscription>(dto);
+            subscription.StartDate = DateTime.UtcNow;
+            // Calculate EndDate based on plan (e.g., 1 month, 1 year) - Assuming 1 year for now
+            subscription.EndDate = DateTime.UtcNow.AddYears(1); 
+            subscription.IsActive = true;
+            subscription.PricePaid = plan.PricePerMember; // Set price based on plan (adjust logic as needed)
+            subscription.PlanId = plan.Id; // Ensure PlanId is set
 
             _context.Subscriptions.Add(subscription);
-            
-            // Update startup subscription status
-            var startup = await _context.Startups.FindAsync(dto.StartupId);
-            if (startup != null)
-            {
-                startup.SubscriptionStatus = dto.PlanType;
-            }
-            
             await _context.SaveChangesAsync();
-
-            return new SubscriptionDto
-            {
-                Id = subscription.Id,
-                StartupId = subscription.StartupId,
-                PlanType = subscription.PlanType,
-                StartDate = subscription.StartDate,
-                EndDate = subscription.EndDate,
-                Cost = subscription.Cost,
-                IsActive = subscription.IsActive,
-                AutoRenew = subscription.AutoRenew,
-                PaymentStatus = subscription.PaymentStatus,
-                CostBreakdown = costBreakdown
-            };
+            
+            // Map back to DTO, including PlanName
+            var subDto = _mapper.Map<SubscriptionDto>(subscription);
+            subDto.PlanName = plan.Name;
+            return subDto;
         }
 
         public async Task<bool> UpdateSubscriptionAsync(int id, SubscriptionUpdateDto dto)
@@ -130,9 +74,10 @@ namespace SDMS.Core.Services
             if (subscription == null)
                 return false;
 
-            subscription.AutoRenew = dto.AutoRenew;
-            subscription.PaymentStatus = dto.PaymentStatus;
+            _mapper.Map(dto, subscription);
+            // Add logic if changing plan or other details is allowed
 
+            _context.Subscriptions.Update(subscription);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -144,15 +89,10 @@ namespace SDMS.Core.Services
                 return false;
 
             subscription.IsActive = false;
-            subscription.AutoRenew = false;
-            
-            // Update startup subscription status to Free
-            var startup = await _context.Startups.FindAsync(subscription.StartupId);
-            if (startup != null)
-            {
-                startup.SubscriptionStatus = "Free";
-            }
-            
+            // Decide whether to set EndDate to now or keep original
+            // subscription.EndDate = DateTime.UtcNow; 
+
+            _context.Subscriptions.Update(subscription);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -160,80 +100,29 @@ namespace SDMS.Core.Services
         public async Task<bool> RenewSubscriptionAsync(int id)
         {
             var subscription = await _context.Subscriptions.FindAsync(id);
-            if (subscription == null)
+            if (subscription == null || !subscription.IsActive) 
                 return false;
 
-            // Create a new subscription period
-            var newEndDate = subscription.EndDate.AddMonths(1);
-            subscription.StartDate = subscription.EndDate;
-            subscription.EndDate = newEndDate;
-            subscription.PaymentStatus = "Pending";
-            
+            // Extend EndDate based on plan duration - Assuming 1 year renewal
+            subscription.EndDate = subscription.EndDate.AddYears(1); 
+
+            _context.Subscriptions.Update(subscription);
             await _context.SaveChangesAsync();
             return true;
         }
 
+        // Updated to return SubscriptionPlanDto
         public async Task<IEnumerable<SubscriptionPlanDto>> GetAvailablePlansAsync()
         {
-            // Return predefined subscription plans
-            return new List<SubscriptionPlanDto>
-            {
-                new SubscriptionPlanDto
-                {
-                    PlanType = "Free",
-                    MonthlyCost = 0,
-                    Features = new List<string>
-                    {
-                        "Basic startup management",
-                        "Up to 5 employees",
-                        "Basic reporting",
-                        "Email support"
-                    }
-                },
-                new SubscriptionPlanDto
-                {
-                    PlanType = "Pro",
-                    MonthlyCost = 100,
-                    Features = new List<string>
-                    {
-                        "Advanced startup management",
-                        "Up to 20 employees",
-                        "Standard reporting",
-                        "Email and chat support",
-                        "Financial analytics"
-                    }
-                },
-                new SubscriptionPlanDto
-                {
-                    PlanType = "Growth",
-                    MonthlyCost = 250,
-                    Features = new List<string>
-                    {
-                        "Comprehensive startup management",
-                        "Up to 50 employees",
-                        "Advanced reporting",
-                        "Priority support",
-                        "Advanced analytics",
-                        "API access"
-                    }
-                },
-                new SubscriptionPlanDto
-                {
-                    PlanType = "Enterprise",
-                    MonthlyCost = 600,
-                    Features = new List<string>
-                    {
-                        "Full-featured startup management",
-                        "Unlimited employees",
-                        "Custom reporting",
-                        "24/7 dedicated support",
-                        "Advanced analytics with predictions",
-                        "API access",
-                        "Custom integrations",
-                        "Dedicated account manager"
-                    }
-                }
-            };
+            // Simulate async operation - Replace with DB query later
+            await Task.Delay(50);
+            // var plans = await _context.SubscriptionPlans.ToListAsync(); // Use this when DB is ready
+            // return _mapper.Map<IEnumerable<SubscriptionPlanDto>>(plans);
+            
+            // Using mock data for now
+            // No mapping needed as _mockPlans is already List<SubscriptionPlanDto>
+            return _mockPlans; 
         }
     }
 }
+

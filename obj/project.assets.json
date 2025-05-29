@@ -10069,11 +10069,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ASUS\\SDMS02\\SDMS02.csproj",
+      "projectUniqueName": "C:\\Users\\ASUS\\Downloads\\final_integrated_sdms_no_node_modules\\home\\ubuntu\\sdms_debug\\home\\ubuntu\\integrated_sdms\\backend\\SDMS02.csproj",
       "projectName": "SDMS02",
-      "projectPath": "C:\\Users\\ASUS\\SDMS02\\SDMS02.csproj",
+      "projectPath": "C:\\Users\\ASUS\\Downloads\\final_integrated_sdms_no_node_modules\\home\\ubuntu\\sdms_debug\\home\\ubuntu\\integrated_sdms\\backend\\SDMS02.csproj",
       "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ASUS\\SDMS02\\obj\\",
+      "outputPath": "C:\\Users\\ASUS\\Downloads\\final_integrated_sdms_no_node_modules\\home\\ubuntu\\sdms_debug\\home\\ubuntu\\integrated_sdms\\backend\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -10185,7 +10185,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.409/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.410/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

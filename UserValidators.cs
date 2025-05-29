@@ -18,6 +18,7 @@ namespace SDMS.Core.Validation
         }
     }
 
+    // Base validator for common user creation fields
     public class UserCreateDtoValidator : AbstractValidator<UserCreateDto>
     {
         public UserCreateDtoValidator()
@@ -30,6 +31,10 @@ namespace SDMS.Core.Validation
                 .NotEmpty().WithMessage("Email is required")
                 .EmailAddress().WithMessage("Invalid email format");
 
+            RuleFor(x => x.Name)
+                .NotEmpty().WithMessage("Name is required")
+                .MaximumLength(100).WithMessage("Name must not exceed 100 characters");
+
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Password is required")
                 .MinimumLength(6).WithMessage("Password must be at least 6 characters")
@@ -40,10 +45,8 @@ namespace SDMS.Core.Validation
                 .Matches(@"^\+?[0-9\s\-\(\)]+$").WithMessage("Invalid phone number format")
                 .When(x => !string.IsNullOrEmpty(x.PhoneNumber));
 
-            RuleFor(x => x.Role)
-                .NotEmpty().WithMessage("Role is required")
-                .Must(role => role == "Admin" || role == "StartupFounder" || role == "Employee")
-                .WithMessage("Role must be Admin, StartupFounder, or Employee");
+            // Removed Role validation as it's determined by the endpoint
+            // RuleFor(x => x.Role).NotEmpty()... 
         }
     }
 
@@ -65,35 +68,43 @@ namespace SDMS.Core.Validation
         }
     }
 
+    // Validator for Admin creation, inheriting base user validation
     public class AdminCreateDtoValidator : AbstractValidator<AdminCreateDto>
     {
         public AdminCreateDtoValidator()
         {
             Include(new UserCreateDtoValidator());
 
-            RuleFor(x => x.AdminLevel)
-                .NotEmpty().WithMessage("Admin level is required")
-                .Must(level => level == "SuperAdmin" || level == "SystemAdmin" || level == "SupportAdmin")
-                .WithMessage("Admin level must be SuperAdmin, SystemAdmin, or SupportAdmin");
+            // Removed AdminLevel validation as it's not in the DTO
+            // RuleFor(x => x.AdminLevel).NotEmpty()...
 
             RuleFor(x => x.Department)
-                .NotEmpty().WithMessage("Department is required")
                 .MaximumLength(50).WithMessage("Department must not exceed 50 characters");
+
+            RuleFor(x => x.Permissions)
+                .MaximumLength(255).WithMessage("Permissions must not exceed 255 characters");
         }
     }
 
+    // Validator for Startup Founder creation, inheriting base user validation
     public class StartupFounderCreateDtoValidator : AbstractValidator<StartupFounderCreateDto>
     {
         public StartupFounderCreateDtoValidator()
         {
             Include(new UserCreateDtoValidator());
 
-            RuleFor(x => x.CompanyName)
-                .NotEmpty().WithMessage("Company name is required")
-                .MaximumLength(100).WithMessage("Company name must not exceed 100 characters");
+            // Removed CompanyName validation as it's not in the DTO
+            // RuleFor(x => x.CompanyName).NotEmpty()...
+
+            RuleFor(x => x.Bio)
+                .MaximumLength(1000).WithMessage("Bio must not exceed 1000 characters");
+
+            RuleFor(x => x.LinkedInProfile)
+                .MaximumLength(255).WithMessage("LinkedIn profile URL must not exceed 255 characters");
         }
     }
 
+    // Validator for Employee creation, inheriting base user validation
     public class EmployeeCreateDtoValidator : AbstractValidator<EmployeeCreateDto>
     {
         public EmployeeCreateDtoValidator()
@@ -103,9 +114,18 @@ namespace SDMS.Core.Validation
             RuleFor(x => x.StartupId)
                 .GreaterThan(0).WithMessage("Startup ID must be greater than 0");
 
-            RuleFor(x => x.EmployeeRole)
-                .NotEmpty().WithMessage("Employee role is required")
-                .MaximumLength(50).WithMessage("Employee role must not exceed 50 characters");
+            RuleFor(x => x.Position)
+                .MaximumLength(100).WithMessage("Position must not exceed 100 characters");
+
+            RuleFor(x => x.Salary)
+                .GreaterThanOrEqualTo(0).When(x => x.Salary.HasValue).WithMessage("Salary must be non-negative");
+
+            RuleFor(x => x.CommissionRate)
+                .InclusiveBetween(0, 1).When(x => x.CommissionRate.HasValue).WithMessage("Commission rate must be between 0 and 1");
+
+            // Removed EmployeeRole validation as it's not in the DTO
+            // RuleFor(x => x.EmployeeRole).NotEmpty()...
         }
     }
 }
+

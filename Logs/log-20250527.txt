@@ -1,0 +1,6 @@
+2025-05-27 11:56:53.777 -04:00 [INF] Starting SDMS API
+2025-05-27 11:56:54.347 -04:00 [WRN] No XML encryptor configured. Key {07f14446-53b1-43e7-82b8-e75c088dd767} may be persisted to storage in unencrypted form.
+2025-05-27 11:56:54.559 -04:00 [INF] Now listening on: http://0.0.0.0:5294
+2025-05-27 11:56:54.562 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-27 11:56:54.562 -04:00 [INF] Hosting environment: Development
+2025-05-27 11:56:54.563 -04:00 [INF] Content root path: /home/ubuntu/sdms_debug/home/ubuntu/integrated_sdms/backend
