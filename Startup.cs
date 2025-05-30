@@ -98,9 +98,14 @@ namespace SDMS.API
             // Add CORS
             services.AddCors(options =>
             {
+                options.AddPolicy("AllowFrontend", policy =>
+                    policy.WithOrigins("http://localhost:8080") // Allow React frontend
+                          .AllowAnyHeader()
+                          .AllowAnyMethod());
+                // You might keep the old policy if needed for other origins
                 options.AddPolicy("AllowSpecificOrigin",
                     builder => builder
-                        .WithOrigins(Configuration.GetSection("AllowedOrigins").Get<string[]>())
+                        .WithOrigins(Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? new string[0]) // Ensure fallback if config is missing
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());

@@ -27,7 +27,6 @@ namespace SDMS.Core.Mapping
 
             // Admin mappings
             CreateMap<Admin, AdminDto>()
-                .IncludeBase<User, UserDto>() // Include base user properties
                 .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.User.Username))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User.Email))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.User.Name))
@@ -40,7 +39,7 @@ namespace SDMS.Core.Mapping
 
             // StartupFounder mappings
             CreateMap<StartupFounder, StartupFounderDto>()
-                .IncludeBase<User, UserDto>() // Include base user properties
+                // .IncludeBase<User, UserDto>() // Removed invalid inheritance mapping
                 .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.User.Username))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User.Email))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.User.Name))

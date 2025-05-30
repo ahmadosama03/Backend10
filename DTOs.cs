@@ -35,11 +35,6 @@ namespace SDMS.Core.DTOs
         public bool? IsActive { get; set; } // Allow updating active status (e.g., by admin)
     }
 
-    public class UserLoginDto
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-    }
 
     public class UserChangePasswordDto
     {
@@ -71,12 +66,6 @@ namespace SDMS.Core.DTOs
         public string? LinkedInProfile { get; set; }
     }
 
-    public class StartupFounderCreateDto : UserCreateDto
-    {
-        // Founder-specific fields for creation
-        public string? Bio { get; set; }
-        public string? LinkedInProfile { get; set; }
-    }
 
     // Employee DTOs
     public class EmployeeDto // Represents an Employee linked to a User
@@ -372,13 +361,6 @@ namespace SDMS.Core.DTOs
         // Add other parameters as needed
     }
 
-    // Authentication DTOs
-    public class AuthResponseDto
-    {
-        public string Token { get; set; }
-        public UserDto User { get; set; } // Added UserDto object
-        public DateTime Expiration { get; set; }
-    }
 
     // Pagination DTOs
     public class PaginatedResultDto<T>

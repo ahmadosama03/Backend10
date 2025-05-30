@@ -10069,11 +10069,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ASUS\\Downloads\\final_integrated_sdms_no_node_modules\\home\\ubuntu\\sdms_debug\\home\\ubuntu\\integrated_sdms\\backend\\SDMS02.csproj",
+      "projectUniqueName": "C:\\Users\\ASUS\\backend18\\SDMS02.csproj",
       "projectName": "SDMS02",
-      "projectPath": "C:\\Users\\ASUS\\Downloads\\final_integrated_sdms_no_node_modules\\home\\ubuntu\\sdms_debug\\home\\ubuntu\\integrated_sdms\\backend\\SDMS02.csproj",
+      "projectPath": "C:\\Users\\ASUS\\backend18\\SDMS02.csproj",
       "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ASUS\\Downloads\\final_integrated_sdms_no_node_modules\\home\\ubuntu\\sdms_debug\\home\\ubuntu\\integrated_sdms\\backend\\obj\\",
+      "outputPath": "C:\\Users\\ASUS\\backend18\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",

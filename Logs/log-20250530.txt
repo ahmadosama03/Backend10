@@ -1,0 +1,12 @@
+2025-05-30 16:36:57.070 +03:00 [INF] Starting SDMS API
+2025-05-30 16:36:59.173 +03:00 [INF] Now listening on: http://localhost:5294
+2025-05-30 16:36:59.180 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-05-30 16:36:59.183 +03:00 [INF] Hosting environment: Development
+2025-05-30 16:36:59.186 +03:00 [INF] Content root path: C:\Users\ASUS\backend18
+2025-05-30 16:37:58.123 +03:00 [WRN] Failed to determine the https port for redirect.
+2025-05-30 16:39:03.783 +03:00 [INF] Executed DbCommand (87ms) [Parameters=[@__email_0='?' (Size = 100)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[CreatedAt], [u].[Email], [u].[FirstName], [u].[IsActive], [u].[LastName], [u].[Name], [u].[PasswordHash], [u].[PasswordSalt], [u].[PhoneNumber], [u].[ResetToken], [u].[ResetTokenExpires], [u].[Role], [u].[UpdatedAt], [u].[Username]
+FROM [Users] AS [u]
+WHERE [u].[Email] = @__email_0
+2025-05-30 16:39:03.838 +03:00 [WRN] Authentication failed for email ahmadabuomar03@gmail.com: Invalid credentials.
+2025-05-30 17:04:17.059 +03:00 [INF] Application is shutting down...
